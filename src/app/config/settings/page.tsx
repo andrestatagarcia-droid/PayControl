@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Download, Upload, Trash2, ShieldCheck, Database, RefreshCw, AlertTriangle } from 'lucide-react';
 import { exportToJSON, importFromJSON } from '@/lib/backup';
 import { db } from '@/lib/db';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 export default function SettingsPage() {
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
     try {
@@ -22,6 +23,12 @@ export default function SettingsPage() {
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Manual validation for better mobile compatibility
+    if (!file.name.endsWith('.json')) {
+      setStatus({ type: 'error', msg: 'El archivo debe ser formato .json' });
+      return;
+    }
 
     if (!confirm('Esta acción reemplazará TODOS tus datos actuales. ¿Estás seguro?')) return;
 
@@ -101,14 +108,22 @@ export default function SettingsPage() {
               <Download size={32} className="text-primary opacity-50 group-hover/btn:opacity-100 transition-opacity" />
             </button>
 
-            <label className="flex items-center justify-between p-6 bg-muted/40 hover:bg-muted/60 border border-border rounded-3xl cursor-pointer transition-all group/btn">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-between p-6 bg-muted/40 hover:bg-muted/60 border border-border rounded-3xl transition-all group/btn"
+            >
               <div className="text-left">
                 <p className="font-black text-foreground group-hover/btn:translate-x-1 transition-transform tracking-tight">IMPORTAR RESPALDO</p>
                 <p className="text-[11px] text-muted-foreground font-bold mt-1 uppercase tracking-widest">Carga un archivo anterior</p>
               </div>
               <Upload size={32} className="text-muted-foreground opacity-50 group-hover/btn:opacity-100 transition-opacity" />
-              <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-            </label>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                onChange={handleImport} 
+                className="hidden" 
+              />
+            </button>
           </div>
         </section>
 
