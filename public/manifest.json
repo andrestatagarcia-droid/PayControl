@@ -3,9 +3,10 @@
   "short_name": "PayControl",
   "description": "Gestión financiera personal simple y visual",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a0b",
-  "theme_color": "#8b5cf6",
+  "theme_color": "#0a0a0b",
   "icons": [
     {
       "src": "/icon-192x192.png",
