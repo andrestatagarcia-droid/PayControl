@@ -36,7 +36,11 @@ export function MobileNav() {
         );
       })}
       {/* Mobile Credit */}
-      <div className="hidden">Creado por Andres Felipe Garcia</div>
+      <div className="absolute -top-6 left-0 right-0 text-center pointer-events-none">
+        <span className="text-[8px] text-muted-foreground/50 uppercase tracking-[0.2em] font-bold">
+          PayControl by Andres Felipe Garcia
+        </span>
+      </div>
     </nav>
   );
 }

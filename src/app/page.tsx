@@ -100,8 +100,8 @@ export default function Dashboard() {
     <div className="space-y-8 pb-10">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display">Resumen Financiero</h1>
-          <p className="text-muted-foreground">{format(new Date(), "PPPP", { locale: es })}</p>
+          <h1 className="text-3xl font-bold font-display">Hola, Andres Felipe Garcia</h1>
+          <p className="text-muted-foreground">{format(new Date(), "PPPP", { locale: es })} • PayControl Pro</p>
         </div>
         
         <div className="flex bg-muted p-1 rounded-xl glass w-full md:w-auto">
