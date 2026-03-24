@@ -1,0 +1,15 @@
+{
+  "name": "paycontrol-backend",
+  "version": "1.0.0",
+  "description": "Backend para la app de gestión financiera PayControl",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "sqlite": "^5.0.1",
+    "cors": "^2.8.5"
+  }
+}

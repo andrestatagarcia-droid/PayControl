@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayControl - Gestión Financiera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">💰</span>
+                <h1>PayControl</h1>
+            </div>
+            <nav>
+                <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+                <button class="nav-btn" data-view="registry">Registro Diario</button>
+                <button class="nav-btn" data-view="config">Configuración</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active">
+                <header>
+                    <h2>Resumen General</h2>
+                    <p class="date-display" id="current-date"></p>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Saldo Actual</h3>
+                        <p class="amount" id="total-balance">$0.00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pagos Pendientes</h3>
+                        <p class="amount warning" id="pending-payments">0</p>
+                    </div>
+                </div>
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3>
+                    <div id="recent-list" class="activity-list"></div>
+                </div>
+            </section>
+
+            <!-- Registry View -->
+            <section id="registry" class="view">
+                <header>
+                    <h2>Registro de Movimientos</h2>
+                    <button class="btn-primary" id="open-entry-modal">+ Nuevo Registro</button>
+                </header>
+                <div class="table-container">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Servicio</th>
+                                <th class="desktop-only">Contrato</th>
+                                <th>Monto</th>
+                                <th>Fuente</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Configuration View -->
+            <section id="config" class="view">
+                <header>
+                    <h2>Configuración de Datos</h2>
+                </header>
+                <div class="config-grid">
+                    <div class="config-card">
+                        <div class="card-header">
+                            <h3>Servicios Recurrentes</h3>
+                            <button class="btn-sm" id="open-service-modal">+ Añadir</button>
+                        </div>
+                        <ul id="services-list" class="item-list"></ul>
+                    </div>
+                    <div class="config-card">
+                        <div class="card-header">
+                            <h3>Fuentes de Pago</h3>
+                            <button class="btn-sm" id="open-source-modal">+ Añadir</button>
+                        </div>
+                        <ul id="sources-list" class="item-list"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal glass">
+            <header class="modal-header">
+                <h3 id="modal-title">Formulario</h3>
+                <button class="close-modal">&times;</button>
+            </header>
+            <form id="modal-form" class="dynamic-form">
+                <!-- Form fields will be injected here -->
+            </form>
+            <footer class="modal-footer">
+                <button type="submit" form="modal-form" class="btn-primary">Guardar</button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
