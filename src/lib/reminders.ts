@@ -32,12 +32,17 @@ export async function getMonthlyReminders(): Promise<Reminder[]> {
     });
 
     const lastPayment = movements.sort((a, b) => b.date.localeCompare(a.date))[0];
+    
+    let dueDateLabel = service.paymentType === 'Mensual' ? 'Este mes' : service.paymentType;
+    if (service.dueDate) {
+      dueDateLabel = `Límite: día ${service.dueDate}`;
+    }
 
     reminders.push({
       service,
       lastPayment,
       isPaidThisMonth: monthlyMovements.length > 0,
-      dueDateLabel: service.paymentType === 'Mensual' ? 'Este mes' : service.paymentType
+      dueDateLabel
     });
   }
 

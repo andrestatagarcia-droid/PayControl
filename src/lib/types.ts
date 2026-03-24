@@ -25,6 +25,7 @@ export interface Service {
   categoryId: number;
   paymentType: PaymentType;
   link?: string;
+  dueDate?: number; // Day of the month (1-31)
 }
 
 export interface Movement {

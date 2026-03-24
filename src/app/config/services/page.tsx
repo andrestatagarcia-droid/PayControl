@@ -25,7 +25,8 @@ export default function ServicesPage() {
     contractNumber: '',
     categoryId: 0,
     paymentType: 'Mensual' as PaymentType,
-    link: ''
+    link: '',
+    dueDate: '' as string | number
   });
 
   const [showCompanyList, setShowCompanyList] = useState(false);
@@ -67,7 +68,8 @@ export default function ServicesPage() {
         contractNumber: '',
         categoryId: categories?.[0]?.id || 0,
         paymentType: 'Mensual',
-        link: ''
+        link: '',
+        dueDate: ''
       });
     } catch (err) {
       setError('Error al guardar el servicio');
@@ -84,7 +86,8 @@ export default function ServicesPage() {
       contractNumber: service.contractNumber,
       categoryId: service.categoryId,
       paymentType: service.paymentType,
-      link: service.link || ''
+      link: service.link || '',
+      dueDate: service.dueDate || ''
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -223,6 +226,20 @@ export default function ServicesPage() {
             />
           </div>
 
+          {/* Fecha Límite */}
+          <div className="space-y-2 relative z-0">
+            <label className="text-sm font-medium text-muted-foreground">Día Límite de Pago (1-31)</label>
+            <input
+              type="number"
+              min={1}
+              max={31}
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value ? Number(e.target.value) : '' })}
+              placeholder="Ej: 15"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
+          </div>
+
           {error && <p className="col-span-full text-destructive text-sm font-medium">{error}</p>}
 
           <div className="col-span-full flex gap-3 pt-2">
@@ -236,7 +253,8 @@ export default function ServicesPage() {
                   setEditingId(null);
                   setFormData({
                     company: '', serviceType: 'Internet', customServiceType: '',
-                    contractNumber: '', categoryId: 0, paymentType: 'Mensual', link: ''
+                    contractNumber: '', categoryId: 0, paymentType: 'Mensual', link: '',
+                    dueDate: ''
                   });
                 }}
                 className="px-6 py-3 bg-muted rounded-xl text-foreground font-medium"
@@ -268,7 +286,10 @@ export default function ServicesPage() {
                       </div>
                       <div>
                         <h3 className="font-bold text-lg">{svc.company}</h3>
-                        <p className="text-sm text-muted-foreground">{svc.serviceType} • {svc.contractNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {svc.serviceType} • {svc.contractNumber}
+                          {svc.dueDate && ` • Día límite: ${svc.dueDate}`}
+                        </p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {category && (
                             <span 

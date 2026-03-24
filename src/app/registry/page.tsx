@@ -301,6 +301,7 @@ export default function RegistryPage() {
                     </span>
                     <input
                       type="number"
+                      step="0.01"
                       value={formData.amount === 0 ? '' : formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
                       placeholder="0.00"
