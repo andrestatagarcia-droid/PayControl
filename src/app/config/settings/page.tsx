@@ -9,7 +9,32 @@ import { cn } from '@/lib/utils';
 export default function SettingsPage() {
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showManualImport, setShowManualImport] = useState(false);
+  const [manualJson, setManualJson] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleManualImport = async () => {
+    if (!manualJson.trim()) return;
+    if (!confirm('Esta acción reemplazará TODOS tus datos actuales. ¿Estás seguro?')) return;
+
+    try {
+      const data = JSON.parse(manualJson);
+      await db.transaction('rw', [db.categories, db.sources, db.services, db.movements], async () => {
+        await db.categories.clear();
+        await db.sources.clear();
+        await db.services.clear();
+        await db.movements.clear();
+        if (data.categories) await db.categories.bulkAdd(data.categories);
+        if (data.sources) await db.sources.bulkAdd(data.sources);
+        if (data.services) await db.services.bulkAdd(data.services);
+        if (data.movements) await db.movements.bulkAdd(data.movements);
+      });
+      setStatus({ type: 'success', msg: 'Datos restaurados con éxito. Recargando...' });
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (err) {
+      setStatus({ type: 'error', msg: 'Formato JSON inválido' });
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -113,8 +138,8 @@ export default function SettingsPage() {
               className="flex items-center justify-between p-6 bg-muted/40 hover:bg-muted/60 border border-border rounded-3xl transition-all group/btn"
             >
               <div className="text-left">
-                <p className="font-black text-foreground group-hover/btn:translate-x-1 transition-transform tracking-tight">IMPORTAR RESPALDO</p>
-                <p className="text-[11px] text-muted-foreground font-bold mt-1 uppercase tracking-widest">Carga un archivo anterior</p>
+                <p className="font-black text-foreground group-hover/btn:translate-x-1 transition-transform tracking-tight">IMPORTAR ARCHIVO</p>
+                <p className="text-[11px] text-muted-foreground font-bold mt-1 uppercase tracking-widest">Desde archivo .json</p>
               </div>
               <Upload size={32} className="text-muted-foreground opacity-50 group-hover/btn:opacity-100 transition-opacity" />
               <input 
@@ -124,6 +149,33 @@ export default function SettingsPage() {
                 className="hidden" 
               />
             </button>
+          </div>
+
+          <div className="pt-4 border-t border-border/50">
+            <button 
+              onClick={() => setShowManualImport(!showManualImport)}
+              className="text-xs font-bold text-primary hover:underline uppercase tracking-widest"
+            >
+              {showManualImport ? "Ocultar Importación Manual" : "¿No puedes seleccionar el archivo? Usa Importación Manual"}
+            </button>
+            
+            {showManualImport && (
+              <div className="mt-4 space-y-4 animate-in slide-in-from-top duration-300">
+                <p className="text-xs text-muted-foreground">Pega aquí el contenido de tu archivo de respaldo (.json):</p>
+                <textarea
+                  value={manualJson}
+                  onChange={(e) => setManualJson(e.target.value)}
+                  placeholder='{"categories": [...], ...}'
+                  className="w-full h-48 bg-background border border-border rounded-2xl p-4 font-mono text-xs focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                />
+                <button
+                  onClick={handleManualImport}
+                  className="w-full py-4 bg-primary text-white font-black rounded-2xl shadow-lg hover:bg-primary/90 transition-all uppercase tracking-tight"
+                >
+                  Restaurar desde Texto Pegado
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
