@@ -52,7 +52,7 @@ export default function SourcesPage() {
   };
 
   const handleEdit = (source: PaymentSource) => {
-    setEditingId(source.id);
+    setEditingId(source.id ?? null);
     setFormData({
       name: source.name,
       type: source.type,

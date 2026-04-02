@@ -58,10 +58,11 @@ export default function ServicesPage() {
       ...formData,
       serviceType: finalServiceType,
       categoryId: Number(formData.categoryId),
+      dueDate: formData.dueDate === '' ? undefined : Number(formData.dueDate),
     };
 
-    const cleanData = { ...dataToSave };
-    delete cleanData.customServiceType;
+    const { customServiceType, ...cleanData } = dataToSave;
+    void customServiceType;
 
     try {
       if (editingId) {
@@ -88,7 +89,7 @@ export default function ServicesPage() {
 
   const handleEdit = (service: Service) => {
     const isStandardType = SERVICE_TYPES.includes(service.serviceType);
-    setEditingId(service.id);
+    setEditingId(service.id ?? null);
     setFormData({
       company: service.company,
       serviceType: isStandardType ? service.serviceType : 'Otro',
