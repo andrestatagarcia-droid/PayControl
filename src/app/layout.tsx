@@ -1,7 +1,7 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { MobileNav, DesktopNav } from "@/components/layout/Navigation";
+import { AppShell } from "@/components/layout/AppShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,17 +37,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
+    <html lang="es" className="dark" suppressHydrationWarning>
       <body className={inter.className}>
-        <div className="flex min-h-screen">
-          <DesktopNav />
-          <main className="flex-1 md:ml-64 pb-20 md:pb-0">
-            <div className="container mx-auto px-4 py-8 max-w-5xl">
-              {children}
-            </div>
-          </main>
-          <MobileNav />
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

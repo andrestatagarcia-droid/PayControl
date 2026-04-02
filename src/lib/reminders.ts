@@ -1,6 +1,7 @@
-import { db } from './db';
+﻿import { db } from './db';
 import { Service, Movement } from './types';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { PAYMENT_TYPE_VALUES, getPaymentTypeLabel } from './labels';
 
 export interface Reminder {
   service: Service;
@@ -18,22 +19,22 @@ export async function getMonthlyReminders(): Promise<Reminder[]> {
   const reminders: Reminder[] = [];
 
   for (const service of services) {
-    if (service.paymentType === 'Único') continue; // Skip strictly unique payments for recurring reminders
+    if (service.paymentType === PAYMENT_TYPE_VALUES.oneTime) continue;
 
-    // Find movements for this service in the current month
-    const movements = await db.movements
-      .where('serviceId')
-      .equals(service.id!)
-      .toArray();
+    const movements = await db.movements.where('serviceId').equals(service.id!).toArray();
 
-    const monthlyMovements = movements.filter(m => {
-      const date = parseISO(m.date);
+    const monthlyMovements = movements.filter((movement) => {
+      const date = parseISO(movement.date);
       return isWithinInterval(date, { start, end });
     });
 
     const lastPayment = movements.sort((a, b) => b.date.localeCompare(a.date))[0];
-    
-    let dueDateLabel = service.paymentType === 'Mensual' ? 'Este mes' : service.paymentType;
+
+    let dueDateLabel =
+      service.paymentType === PAYMENT_TYPE_VALUES.monthly
+        ? 'Este mes'
+        : getPaymentTypeLabel(service.paymentType);
+
     if (service.dueDate) {
       dueDateLabel = `Límite: día ${service.dueDate}`;
     }
@@ -42,7 +43,7 @@ export async function getMonthlyReminders(): Promise<Reminder[]> {
       service,
       lastPayment,
       isPaidThisMonth: monthlyMovements.length > 0,
-      dueDateLabel
+      dueDateLabel,
     });
   }
 

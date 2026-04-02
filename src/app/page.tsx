@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { db } from '@/lib/db';
 import { getMonthlyReminders, Reminder } from '@/lib/reminders';
+import { isCreditMovement, isDebitMovement } from '@/lib/labels';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { startOfMonth, endOfMonth, subMonths, format, isAfter, isBefore, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,7 +51,7 @@ export default function Dashboard() {
     let expenses = 0;
     
     filteredMovements.forEach(m => {
-      if (m.type === 'Crédito') income += m.amount;
+      if (isCreditMovement(m.type)) income += m.amount;
       else expenses += m.amount;
     });
 
@@ -72,7 +73,7 @@ export default function Dashboard() {
         dataMap[dateKey] = { name: dateKey, ingresos: 0, egresos: 0 };
       }
       
-      if (m.type === 'Crédito') dataMap[dateKey].ingresos += m.amount;
+      if (isCreditMovement(m.type)) dataMap[dateKey].ingresos += m.amount;
       else dataMap[dateKey].egresos += m.amount;
     });
 
@@ -83,7 +84,7 @@ export default function Dashboard() {
   const categoryData = useMemo(() => {
     const dataMap: Record<number, { name: string; value: number; color: string }> = {};
     
-    filteredMovements.filter(m => m.type === 'Débito').forEach(m => {
+    filteredMovements.filter(m => isDebitMovement(m.type)).forEach(m => {
       const cat = categories.find(c => c.id === m.categoryId);
       if (!cat) return;
 
@@ -297,7 +298,7 @@ export default function Dashboard() {
                           />
                         )}
                         <span className="text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                          Pagar →
+                          Pagar ahora
                         </span>
                       </div>
                     )}
@@ -320,7 +321,7 @@ export default function Dashboard() {
           <div className="divide-y divide-border">
             {movements.slice(0, 5).map((mov) => {
               const cat = categories.find(c => c.id === mov.categoryId);
-              const isDebit = mov.type === 'Débito';
+              const isDebit = isDebitMovement(mov.type);
               return (
                 <div key={mov.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-4">
@@ -391,3 +392,6 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+

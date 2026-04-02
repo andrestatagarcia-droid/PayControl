@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ListOrdered, Settings, PlusCircle, Tag, Zap, Wallet } from 'lucide-react';
+import { Home, ListOrdered, Settings, Tag, Zap, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -26,8 +26,8 @@ export function MobileNav() {
             key={item.name}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center space-y-1 w-full transition-colors",
-              isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              'flex flex-col items-center justify-center space-y-1 w-full transition-colors',
+              isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
@@ -35,7 +35,6 @@ export function MobileNav() {
           </Link>
         );
       })}
-      {/* Mobile Credit */}
       <div className="absolute -top-6 left-0 right-0 text-center pointer-events-none">
         <span className="text-[8px] text-muted-foreground/50 uppercase tracking-[0.2em] font-bold">
           PayControl by Andres Felipe Garcia
@@ -51,9 +50,7 @@ export function DesktopNav() {
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-border bg-card p-6">
       <div className="flex items-center space-x-3 mb-10 px-2">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold">
-          P
-        </div>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold">P</div>
         <h1 className="text-xl font-bold tracking-tight">PayControl</h1>
       </div>
 
@@ -65,10 +62,10 @@ export function DesktopNav() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all",
-                isActive 
-                  ? "bg-primary/10 text-primary font-semibold" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all',
+                isActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <item.icon size={20} />
@@ -84,7 +81,8 @@ export function DesktopNav() {
           <p className="text-sm font-semibold">Pro Version</p>
           <div className="mt-4 pt-4 border-t border-border/50">
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-tight">
-              Desarrollado por<br />
+              Desarrollado por
+              <br />
               <span className="text-foreground font-bold">Andres Felipe Garcia</span>
             </p>
           </div>

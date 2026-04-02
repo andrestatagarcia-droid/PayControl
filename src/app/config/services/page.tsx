@@ -1,14 +1,14 @@
-'use client';
+﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Trash2, Edit2, Zap, ExternalLink, ChevronDown } from 'lucide-react';
+import { Trash2, Edit2, Zap, ExternalLink } from 'lucide-react';
 import { db } from '@/lib/db';
-import { cn } from '@/lib/utils';
-import { PaymentType } from '@/lib/types';
+import { PaymentType, Service } from '@/lib/types';
+import { PAYMENT_TYPE_OPTIONS, PAYMENT_TYPE_VALUES, getPaymentTypeLabel } from '@/lib/labels';
 
 const COLOMBIAN_COMPANIES = [
-  'Claro', 'Movistar', 'Tigo', 'ETB', 'WOM', 'Enel', 'Vanti', 'Acueducto', 'EPM', 'Gas Natural', 'DirecTV'
+  'Claro', 'Movistar', 'Tigo', 'ETB', 'WOM', 'Enel', 'Vanti', 'Acueducto', 'EPM', 'Gas Natural', 'DirecTV',
 ];
 
 const SERVICE_TYPES = ['Internet', 'Móvil', 'Agua', 'Energía', 'Gas', 'Otro'];
@@ -16,7 +16,7 @@ const SERVICE_TYPES = ['Internet', 'Móvil', 'Agua', 'Energía', 'Gas', 'Otro'];
 export default function ServicesPage() {
   const services = useLiveQuery(() => db.services.toArray());
   const categories = useLiveQuery(() => db.categories.toArray());
-  
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     company: '',
@@ -24,11 +24,10 @@ export default function ServicesPage() {
     customServiceType: '',
     contractNumber: '',
     categoryId: 0,
-    paymentType: 'Mensual' as PaymentType,
+    paymentType: PAYMENT_TYPE_VALUES.monthly as PaymentType,
     link: '',
-    dueDate: '' as string | number
+    dueDate: '' as string | number,
   });
-
   const [showCompanyList, setShowCompanyList] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,22 +36,32 @@ export default function ServicesPage() {
     setError('');
 
     if (!formData.company || !formData.categoryId) {
-      setError('Empresa y Categoría son obligatorios');
+      setError('Empresa y categoría son obligatorios.');
       return;
     }
 
-    const finalServiceType = formData.serviceType === 'Otro' 
-      ? (formData.customServiceType || 'Otro') 
+    if (formData.dueDate !== '' && (Number(formData.dueDate) < 1 || Number(formData.dueDate) > 31)) {
+      setError('El día límite debe estar entre 1 y 31.');
+      return;
+    }
+
+    if (!categories?.some((category) => category.id === Number(formData.categoryId))) {
+      setError('La categoría seleccionada ya no existe.');
+      return;
+    }
+
+    const finalServiceType = formData.serviceType === 'Otro'
+      ? formData.customServiceType || 'Otro'
       : formData.serviceType;
 
     const dataToSave = {
       ...formData,
       serviceType: finalServiceType,
-      categoryId: Number(formData.categoryId)
+      categoryId: Number(formData.categoryId),
     };
 
-    // Remove customServiceType before saving to DB
-    const { customServiceType, ...cleanData } = dataToSave as any;
+    const cleanData = { ...dataToSave };
+    delete cleanData.customServiceType;
 
     try {
       if (editingId) {
@@ -61,22 +70,23 @@ export default function ServicesPage() {
       } else {
         await db.services.add(cleanData);
       }
+
       setFormData({
         company: '',
         serviceType: SERVICE_TYPES[0],
         customServiceType: '',
         contractNumber: '',
         categoryId: categories?.[0]?.id || 0,
-        paymentType: 'Mensual',
+        paymentType: PAYMENT_TYPE_VALUES.monthly,
         link: '',
-        dueDate: ''
+        dueDate: '',
       });
-    } catch (err) {
-      setError('Error al guardar el servicio');
+    } catch {
+      setError('Error al guardar el servicio.');
     }
   };
 
-  const handleEdit = (service: any) => {
+  const handleEdit = (service: Service) => {
     const isStandardType = SERVICE_TYPES.includes(service.serviceType);
     setEditingId(service.id);
     setFormData({
@@ -87,9 +97,24 @@ export default function ServicesPage() {
       categoryId: service.categoryId,
       paymentType: service.paymentType,
       link: service.link || '',
-      dueDate: service.dueDate || ''
+      dueDate: service.dueDate || '',
     });
+    setError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (serviceId: number) => {
+    setError('');
+
+    const linkedMovements = await db.movements.where('serviceId').equals(serviceId).count();
+    if (linkedMovements > 0) {
+      setError('No puedes eliminar este servicio porque ya tiene movimientos asociados.');
+      return;
+    }
+
+    if (confirm('¿Estás seguro de eliminar este servicio?')) {
+      await db.services.delete(serviceId);
+    }
   };
 
   return (
@@ -99,13 +124,9 @@ export default function ServicesPage() {
         <p className="text-muted-foreground">Gestiona tus pagos recurrentes</p>
       </header>
 
-      {/* Form Card */}
       <div className="gradient-card rounded-2xl p-6 glass">
-        <h2 className="text-lg font-semibold mb-6">
-          {editingId ? 'Editar Servicio' : 'Nuevo Servicio'}
-        </h2>
+        <h2 className="text-lg font-semibold mb-6">{editingId ? 'Editar servicio' : 'Nuevo servicio'}</h2>
         <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Empresa con Autocomplete */}
           <div className="space-y-2 relative z-50">
             <label className="text-sm font-medium text-muted-foreground">Empresa</label>
             <input
@@ -122,7 +143,7 @@ export default function ServicesPage() {
             />
             {showCompanyList && (
               <div className="absolute left-0 right-0 z-[100] mt-1 bg-[#16161a] border border-border rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                {COLOMBIAN_COMPANIES.filter(c => c.toLowerCase().includes(formData.company.toLowerCase())).map(company => (
+                {COLOMBIAN_COMPANIES.filter((company) => company.toLowerCase().includes(formData.company.toLowerCase())).map((company) => (
                   <button
                     key={company}
                     type="button"
@@ -139,16 +160,19 @@ export default function ServicesPage() {
             )}
           </div>
 
-          {/* Tipo de Servicio */}
           <div className="space-y-2 relative z-40">
-            <label className="text-sm font-medium text-muted-foreground">Tipo de Servicio</label>
+            <label className="text-sm font-medium text-muted-foreground">Tipo de servicio</label>
             <div className="flex gap-3">
               <select
                 value={formData.serviceType}
                 onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
                 className="flex-1 bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
               >
-                {SERVICE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                {SERVICE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
               {formData.serviceType === 'Otro' && (
                 <input
@@ -162,9 +186,8 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          {/* Número de Contrato */}
           <div className="space-y-2 relative z-30">
-            <label className="text-sm font-medium text-muted-foreground">Número de Contrato</label>
+            <label className="text-sm font-medium text-muted-foreground">Número de contrato</label>
             <input
               type="text"
               value={formData.contractNumber}
@@ -174,7 +197,6 @@ export default function ServicesPage() {
             />
           </div>
 
-          {/* Categoría */}
           <div className="space-y-2 relative z-20">
             <label className="text-sm font-medium text-muted-foreground">Categoría</label>
             <select
@@ -183,38 +205,38 @@ export default function ServicesPage() {
               className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
             >
               <option value={0}>Selecciona una categoría</option>
-              {categories?.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              {categories?.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
               ))}
             </select>
             {formData.categoryId > 0 && (
               <div className="flex items-center gap-2 mt-1">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: categories?.find(c => c.id === formData.categoryId)?.color }}
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: categories?.find((item) => item.id === formData.categoryId)?.color }}
                 />
                 <span className="text-xs text-muted-foreground">Color de categoría</span>
               </div>
             )}
           </div>
 
-          {/* Pago (Periodicidad) */}
           <div className="space-y-2 relative z-10">
-            <label className="text-sm font-medium text-muted-foreground">Frecuencia de Pago</label>
+            <label className="text-sm font-medium text-muted-foreground">Frecuencia de pago</label>
             <select
               value={formData.paymentType}
               onChange={(e) => setFormData({ ...formData, paymentType: e.target.value as PaymentType })}
               className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
             >
-              <option value="Único">Único</option>
-              <option value="Diario">Diario</option>
-              <option value="Semanal">Semanal</option>
-              <option value="Mensual">Mensual</option>
-              <option value="Anual">Anual</option>
+              {PAYMENT_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Link */}
           <div className="space-y-2 relative z-0">
             <label className="text-sm font-medium text-muted-foreground">Link</label>
             <input
@@ -226,9 +248,8 @@ export default function ServicesPage() {
             />
           </div>
 
-          {/* Fecha Límite */}
           <div className="space-y-2 relative z-0">
-            <label className="text-sm font-medium text-muted-foreground">Día Límite de Pago (1-31)</label>
+            <label className="text-sm font-medium text-muted-foreground">Día límite de pago (1-31)</label>
             <input
               type="number"
               min={1}
@@ -244,7 +265,7 @@ export default function ServicesPage() {
 
           <div className="col-span-full flex gap-3 pt-2">
             <button type="submit" className="flex-1 btn-primary text-white font-semibold py-3 rounded-xl transition-all">
-              {editingId ? 'Actualizar Servicio' : 'Crear Servicio'}
+              {editingId ? 'Actualizar servicio' : 'Crear servicio'}
             </button>
             {editingId && (
               <button
@@ -252,10 +273,16 @@ export default function ServicesPage() {
                 onClick={() => {
                   setEditingId(null);
                   setFormData({
-                    company: '', serviceType: 'Internet', customServiceType: '',
-                    contractNumber: '', categoryId: 0, paymentType: 'Mensual', link: '',
-                    dueDate: ''
+                    company: '',
+                    serviceType: SERVICE_TYPES[0],
+                    customServiceType: '',
+                    contractNumber: '',
+                    categoryId: 0,
+                    paymentType: PAYMENT_TYPE_VALUES.monthly,
+                    link: '',
+                    dueDate: '',
                   });
+                  setError('');
                 }}
                 className="px-6 py-3 bg-muted rounded-xl text-foreground font-medium"
               >
@@ -266,33 +293,32 @@ export default function ServicesPage() {
         </form>
       </div>
 
-      {/* Listado */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Servicios Registrados</h2>
+        <h2 className="text-lg font-semibold">Servicios registrados</h2>
         <div className="grid gap-4">
           {!services || services.length === 0 ? (
             <div className="text-center py-12 glass rounded-2xl border border-dashed border-border text-muted-foreground">
               No hay servicios configurados aún
             </div>
           ) : (
-            services.map((svc) => {
-              const category = categories?.find(c => c.id === svc.categoryId);
+            services.map((service) => {
+              const category = categories?.find((item) => item.id === service.categoryId);
               return (
-                <div key={svc.id} className="p-5 glass rounded-2xl border border-border hover:border-primary/30 transition-all group">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                <div key={service.id} className="p-5 glass rounded-2xl border border-border hover:border-primary/30 transition-all">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0">
                         <Zap size={24} />
                       </div>
-                      <div>
-                        <h3 className="font-bold text-lg">{svc.company}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {svc.serviceType} • {svc.contractNumber}
-                          {svc.dueDate && ` • Día límite: ${svc.dueDate}`}
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-lg break-words">{service.company}</h3>
+                        <p className="text-sm text-muted-foreground break-words">
+                          {service.serviceType} • {service.contractNumber || 'Sin referencia'}
+                          {service.dueDate && ` • Día límite: ${service.dueDate}`}
                         </p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {category && (
-                            <span 
+                            <span
                               className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm"
                               style={{ backgroundColor: category.color }}
                             >
@@ -300,32 +326,35 @@ export default function ServicesPage() {
                             </span>
                           )}
                           <span className="px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold">
-                            {svc.paymentType.toUpperCase()}
+                            {getPaymentTypeLabel(service.paymentType).toUpperCase()}
                           </span>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
-                      {svc.link && (
-                        <a 
-                          href={svc.link} 
-                          target="_blank" 
+
+                    <div className="flex shrink-0 items-center gap-3 self-start">
+                      {service.link && (
+                        <a
+                          href={service.link}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="p-2.5 bg-muted/50 hover:bg-primary/20 hover:text-primary rounded-xl transition-all"
+                          aria-label="Abrir enlace del servicio"
                         >
                           <ExternalLink size={18} />
                         </a>
                       )}
-                      <button 
-                        onClick={() => handleEdit(svc)}
+                      <button
+                        onClick={() => handleEdit(service)}
                         className="p-2.5 bg-muted/50 hover:bg-primary/20 hover:text-primary rounded-xl transition-all"
+                        aria-label="Editar servicio"
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button 
-                        onClick={() => db.services.delete(svc.id!)}
+                      <button
+                        onClick={() => handleDelete(service.id!)}
                         className="p-2.5 bg-muted/50 hover:bg-destructive/20 hover:text-destructive rounded-xl transition-all"
+                        aria-label="Eliminar servicio"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -340,3 +369,4 @@ export default function ServicesPage() {
     </div>
   );
 }
+
